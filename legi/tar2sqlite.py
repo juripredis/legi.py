@@ -245,11 +245,11 @@ def process_archive(db, archive_path, raw, process_links=True, check_html=True):
             if base != 'LEGI':
                 if tag in ['ARTICLE', 'SECTION_TA']:
                     contexte = root.find('CONTEXTE/TEXTE')
-                    text_cid = attr(contexte, 'cid')
+                    row_cid = attr(contexte, 'cid')
                 elif tag in ['TEXTELR', 'TEXTE_VERSION']:
                     meta_spec = meta.find('META_SPEC')
                     meta_chronicle = meta_spec.find('META_TEXTE_CHRONICLE')
-                    text_cid = meta_chronicle.find('CID').text
+                    row_cid = meta_chronicle.find('CID').text
                 else:
                     raise Exception('unexpected tag: '+tag)
 
@@ -346,7 +346,10 @@ def process_archive(db, archive_path, raw, process_links=True, check_html=True):
                 scrape_tags(attrs, root, SECTION_TA_TAGS)
                 section_id = row_id
                 contexte = root.find('CONTEXTE/TEXTE')
-                assert attr(contexte, 'cid') == row_cid
+                try:
+                    assert attr(contexte, 'cid') == row_cid
+                except:
+                    breakpoint()
                 parents = contexte.findall('.//TITRE_TM')
                 if parents:
                     attrs['parent'] = attr(parents[-1], 'id')
@@ -368,7 +371,7 @@ def process_archive(db, archive_path, raw, process_links=True, check_html=True):
                 assert table == 'textes_structs'
                 meta_spec = meta.find('META_SPEC')
                 meta_chronicle = meta_spec.find('META_TEXTE_CHRONICLE')
-                assert meta_chronicle.find('CID').text == text_cid
+                assert meta_chronicle.find('CID').text == row_cid
                 scrape_tags(attrs, root, TEXTELR_TAGS)
                 sommaires = [
                     {
