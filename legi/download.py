@@ -79,11 +79,11 @@ def download_legi_via_ftp(dst_dir, base="LEGI"):
     ftph.quit()
 
 
-def download_legi_via_http(dst_dir):
+def download_legi_via_http(dst_dir, base):
     local_files = set(os.listdir(dst_dir))
     log("Downloading the index page...")
     sess = requests.Session()
-    base_url = DILA_HTTP_URL + DILA_LEGI_DIR + '/'
+    base_url = DILA_HTTP_URL + DILA_LEGI_DIR[base] + '/'
     r = sess.get(base_url)
     assert r.status_code == 200, r
     remote_files, common_files, missing_files = set(), [], []
