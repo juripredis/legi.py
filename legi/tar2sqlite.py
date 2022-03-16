@@ -38,7 +38,7 @@ def innerHTML(e):
 
 
 def suppress(base, get_table, db, liste_suppression):
-    counts = {}
+    counts = defaultdict(int)
     for path in liste_suppression:
         parts = path.split('/')
         if parts[0] == 'null':
@@ -201,7 +201,7 @@ def process_archive(db, archive_path, raw, process_links=True, check_html=True):
     base = db.one("SELECT value FROM db_meta WHERE key = 'base'") or 'LEGI'
 
     skipped = 0
-    unknown_folders = {}
+    unknown_folders = defaultdict(int)
     liste_suppression = []
     xml = etree.XMLParser(remove_blank_text=True)
     with tqdm(total=os.stat(archive_path).st_size, unit='bytes') as pbar, \
@@ -346,10 +346,7 @@ def process_archive(db, archive_path, raw, process_links=True, check_html=True):
                 scrape_tags(attrs, root, SECTION_TA_TAGS)
                 section_id = row_id
                 contexte = root.find('CONTEXTE/TEXTE')
-                try:
-                    assert attr(contexte, 'cid') == row_cid
-                except:
-                    breakpoint()
+                assert attr(contexte, 'cid') == row_cid
                 parents = contexte.findall('.//TITRE_TM')
                 if parents:
                     attrs['parent'] = attr(parents[-1], 'id')
