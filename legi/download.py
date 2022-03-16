@@ -17,7 +17,10 @@ import requests
 DILA_FTP_HOST = 'echanges.dila.gouv.fr'
 DILA_FTP_PORT = 21
 DILA_HTTP_URL = 'https://echanges.dila.gouv.fr/OPENDATA'
-DILA_LEGI_DIR = '/LEGI'
+DILA_LEGI_DIR = {
+    'LEGI': '/LEGI',
+    'JORF': '/JORF',
+}
 
 
 def log(*args, **kw):
@@ -25,16 +28,16 @@ def log(*args, **kw):
     print(*args, **kw)
 
 
-def download_legi(dst_dir, retry_hours=0):
+def download_legi(dst_dir, base='LEGI', retry_hours=0):
     if not os.path.exists(dst_dir):
         os.mkdir(dst_dir)
     sleep_hours = 0
     while True:
         try:
             try:
-                download_legi_via_ftp(dst_dir)
+                download_legi_via_ftp(dst_dir, base)
             except Exception:
-                download_legi_via_http(dst_dir)
+                download_legi_via_http(dst_dir, base)
             break
         except Exception:
             # Retry in an hour, unless we've reached our time limit
@@ -49,13 +52,14 @@ def download_legi(dst_dir, retry_hours=0):
             sys.exit(1)
 
 
-def download_legi_via_ftp(dst_dir):
+def download_legi_via_ftp(dst_dir, base="LEGI"):
     local_files = set(os.listdir(dst_dir))
     ftph = ftplib.FTP()
     ftph.connect(DILA_FTP_HOST, DILA_FTP_PORT)
     ftph.login()
-    ftph.cwd(DILA_LEGI_DIR)
-    remote_files = [filename for filename in ftph.nlst() if '.tar.' in filename]
+
+    ftph.cwd(DILA_LEGI_DIR[base])
+    remote_files = [filename for filename in ftph.nlst() if '.tar.' in filename and (base.lower()+'_' in filename or base+'_' in filename)]
     common_files = [f for f in remote_files if f in local_files]
     missing_files = [f for f in remote_files if f not in local_files]
     ftph.voidcmd('TYPE I')
@@ -137,6 +141,10 @@ if __name__ == '__main__':
     p.add_argument('directory')
     p.add_argument('-r', '--retry', action='store_true', default=False,
                    help="if the download fails, retry every hour for up to 6 hours")
+    p.add_argument('--base', default='LEGI')
     args = p.parse_args()
     retry_hours = 6 if args.retry else 0
-    download_legi(args.directory, retry_hours=retry_hours)
+    if args.base not in DILA_LEGI_DIR.keys():
+        print('!> Non-existing database "' + args.base + '".')
+        raise SystemExit(1)
+    download_legi(args.directory, retry_hours=retry_hours, base=args.base)
