@@ -48,6 +48,8 @@ def suppress(base, get_table, db, liste_suppression):
         row_cid = parts[11] if base == 'LEGI' else row_id
         assert len(row_id) == 20
         table = get_table(parts)
+        if not table:
+            continue
         sous_dossier = SOUS_DOSSIER_MAP[table]
         db.run("""
             DELETE FROM {0}
